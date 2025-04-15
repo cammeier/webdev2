@@ -16,12 +16,8 @@ using System.Windows.Shapes;
 
 namespace StudentManagement
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
-
         private bool isUpdateMode = false;
         private Undergraduate selectedUndergraduate;
         private Graduate selectedGraduate;
@@ -29,11 +25,11 @@ namespace StudentManagement
 
         private bool isUpdateCoursesMode = false;
 
-
         public MainWindow()
         {
             InitializeComponent();
         }
+
         private void AddStudentButton_Click(object sender, RoutedEventArgs e)
         {
             if (isUpdateMode)
@@ -46,10 +42,8 @@ namespace StudentManagement
             }
         }
 
-        
         private void AddStudent()
         {
-
             // Get the text from the TextBoxes
             string firstName = FirstNameTextBox.Text;
             string lastName = LastNameTextBox.Text;
@@ -80,6 +74,7 @@ namespace StudentManagement
                 MessageBox.Show("Please enter a valid age.");
                 return;
             }
+
             // Get the selected gender
             ComboBoxItem selectedGenderItem = (ComboBoxItem)GenderCombo.SelectedItem;
             if (selectedGenderItem == null)
@@ -87,6 +82,7 @@ namespace StudentManagement
                 MessageBox.Show("Please select a gender.");
                 return;
             }
+
             string genderText = selectedGenderItem.Content.ToString();
             int genderInt = -1;
             if (genderText == "Male")
@@ -102,21 +98,25 @@ namespace StudentManagement
                 genderInt = 2;
             }
 
-
-
             // Get the selected level
             ComboBoxItem selectedLevelItem = (ComboBoxItem)StudentLevelBox.SelectedItem;
+            if (selectedLevelItem == null)
+            {
+                MessageBox.Show("Please select a student level.");
+                return;
+            }
+
             string selectedLevel = selectedLevelItem.Content.ToString();
 
-            // You can now use the selectedLevel variable as needed
+            // Create and add the student
             if (selectedLevel == "Undergraduate")
             {
-                Undergraduate newStudent = new Undergraduate(firstName, lastName, genderInt, int.Parse(ageText), studentID);
+                Undergraduate newStudent = new Undergraduate(firstName, lastName, genderInt, age, studentID);
                 StudentsListBox.Items.Add(newStudent);
             }
             else if (selectedLevel == "Graduate")
             {
-                Graduate newStudent = new Graduate(firstName, lastName, genderInt, int.Parse(ageText), studentID);
+                Graduate newStudent = new Graduate(firstName, lastName, genderInt, age, studentID);
                 StudentsListBox.Items.Add(newStudent);
             }
             else
@@ -129,8 +129,8 @@ namespace StudentManagement
             ClearStudentForm();
 
             SortListBoxByName(StudentsListBox);
-
         }
+
         private void ClearStudentForm()
         {
             FirstNameTextBox.Clear();
@@ -140,6 +140,7 @@ namespace StudentManagement
             GenderCombo.SelectedIndex = -1;
             StudentLevelBox.SelectedIndex = -1;
         }
+
         private void UpdateStudent()
         {
             if (selectedUndergraduate != null)
@@ -182,13 +183,12 @@ namespace StudentManagement
                 selectedCourse.Grade = float.Parse(GPATextBox.Text);
             }
 
-
             // Clear all text boxes
-            ClearStudentForm();
+            ClearCourseForm();
 
-            // Reset the button to "Add Student" mode
+            // Reset the button to "Add Course" mode
             AddCourseButton.Content = "Add Course";
-            isUpdateMode = false;
+            isUpdateCoursesMode = false;
             selectedCourse = null;
 
             SortCourses(CoursesListBox);
@@ -205,6 +205,7 @@ namespace StudentManagement
                 AddCourse();
             }
         }
+
         private void AddCourse()
         {
             string courseName = CourseNameTextBox.Text;
@@ -244,14 +245,14 @@ namespace StudentManagement
                 return;
             }
 
-            Course newCourse = new Course(courseName, coursePrefix, int.Parse(courseNumberText), float.Parse(courseGradeText), int.Parse(courseCreditsText));
+            Course newCourse = new Course(courseName, coursePrefix, courseNumber, courseGrade, courseCredits);
 
             if (StudentsListBox.SelectedItem is Graduate selectedGraduate)
             {
                 selectedGraduate.AddCourse(newCourse);
                 CoursesListBox.Items.Add(newCourse);
             }
-            else if ((StudentsListBox.SelectedItem is Undergraduate selectedUndergraduate))
+            else if (StudentsListBox.SelectedItem is Undergraduate selectedUndergraduate)
             {
                 selectedUndergraduate.AddCourse(newCourse);
                 CoursesListBox.Items.Add(newCourse);
@@ -259,18 +260,22 @@ namespace StudentManagement
             else
             {
                 MessageBox.Show("Please select a student to add the course.");
-
+                return;
             }
 
             // Clear all text boxes  
+            ClearCourseForm();
+            SortCourses(CoursesListBox);
+        }
+
+        private void ClearCourseForm()
+        {
             CourseNameTextBox.Clear();
             CoursePrefixTextBox.Clear();
             CourseNumberTextBox.Clear();
             CreditHoursTextBox.Clear();
             GPATextBox.Clear();
-            SortCourses(CoursesListBox);
         }
-
 
         private void StudentsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -300,9 +305,6 @@ namespace StudentManagement
 
                 selectedUndergraduate.Gpa = test;
                 TotalGPATextBox.Text = selectedUndergraduate.Gpa.ToString("F2");
-
-
-
             }
             else if (StudentsListBox.SelectedItem is Graduate selectedGraduate)
             {
@@ -326,7 +328,7 @@ namespace StudentManagement
                 }
                 AddStudentButton.Content = "Update Student";
                 isUpdateMode = true;
-                selectedGraduate.Gpa = cumGPA /totalCreditHours;
+                selectedGraduate.Gpa = cumGPA / totalCreditHours;
 
                 TotalGPATextBox.Text = selectedGraduate.Gpa.ToString();
             }
@@ -336,16 +338,16 @@ namespace StudentManagement
         {
             if (CoursesListBox.SelectedItem is Course selectedCourse)
             {
+                this.selectedCourse = selectedCourse;
                 CourseNameTextBox.Text = selectedCourse.CourseName;
                 CoursePrefixTextBox.Text = selectedCourse.CoursePrefix;
                 CourseNumberTextBox.Text = selectedCourse.CourseNumber.ToString();
                 CreditHoursTextBox.Text = selectedCourse.Credit.ToString();
                 GPATextBox.Text = selectedCourse.Grade.ToString();
+
+                AddCourseButton.Content = "Update Course";
+                isUpdateCoursesMode = true;
             }
-
-            AddCourseButton.Content = "Update Course";
-            isUpdateMode = true;
-
         }
 
         private void SortListBoxByName(ListBox listBox)
@@ -367,28 +369,23 @@ namespace StudentManagement
             view.Refresh();
         }
 
-    
-
-    private void SortCourses(ListBox listBox)
+        private void SortCourses(ListBox listBox)
         {
             ICollectionView view = CollectionViewSource.GetDefaultView(listBox.Items);
             view.SortDescriptions.Clear();
-
-            view.SortDescriptions.Clear();
             view.SortDescriptions.Add(
                 new SortDescription(
-                     nameof(Course.CoursePrefix), 
-                     ListSortDirection.Ascending
+                    nameof(Course.CoursePrefix),
+                    ListSortDirection.Ascending
                 )
             );
             view.SortDescriptions.Add(
                 new SortDescription(
-                    nameof(Course.CourseNumber), 
+                    nameof(Course.CourseNumber),
                     ListSortDirection.Ascending
                 )
             );
             view.Refresh();
         }
-
     }
 }
